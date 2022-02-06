@@ -38,14 +38,16 @@ void net_close (void)
     nl_socket_free(s);
 }
 
-int net_get_stats (const char* device, struct timespec *t, uint64_t *rx_bytes, uint64_t *tx_bytes)
+int net_get_stats (const char* device, struct timespec *t, uint64_t *rx_bytes, uint64_t *tx_bytes, uint64_t *rx_packets, uint64_t *tx_packets)
 {
     struct rtnl_link *link;
     if (!rtnl_link_get_kernel(s, 0, device, &link))
     {
         clock_gettime (CLOCK_MONOTONIC_COARSE, t);
-        *rx_bytes = rtnl_link_get_stat (link, RTNL_LINK_RX_BYTES);
-        *tx_bytes = rtnl_link_get_stat (link, RTNL_LINK_TX_BYTES);
+        *rx_bytes   = rtnl_link_get_stat (link, RTNL_LINK_RX_BYTES);
+        *tx_bytes   = rtnl_link_get_stat (link, RTNL_LINK_TX_BYTES);
+        *rx_packets = rtnl_link_get_stat (link, RTNL_LINK_RX_PACKETS);
+        *tx_packets = rtnl_link_get_stat (link, RTNL_LINK_TX_PACKETS);
         rtnl_link_put(link);
 
         return 0;

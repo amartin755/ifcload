@@ -28,30 +28,55 @@
 
 uint64_t rx_bytes_prev = 0;
 uint64_t tx_bytes_prev = 0;
+uint64_t rx_packets_prev = 0;
+uint64_t tx_packets_prev = 0;
 uint64_t rx_bytes = 0;
 uint64_t tx_bytes = 0;
+uint64_t rx_packets = 0;
+uint64_t tx_packets = 0;
 struct timespec t_prev;
 struct timespec t;
 
 static unsigned updateTime = 500000;
 
 
-static double convert_to_human_readable (uint64_t value, char** prefix)
+static double convert_to_human_readable (int binary, uint64_t value, char** prefix)
 {
-    if (value > 1000000000)
+    if (!binary)
     {
-        *prefix = "G";
-        return value / 1000000000.0;
+        if (value > 1000000000)
+        {
+            *prefix = "G";
+            return value / 1000000000.0;
+        }
+        if (value > 1000000)
+        {
+            *prefix = "M";
+            return value / 1000000.0;
+        }
+        if (value > 1000)
+        {
+            *prefix = "k";
+            return value / 1000.0;
+        }
     }
-    if (value > 1000000)
+    else
     {
-        *prefix = "M";
-        return value / 1000000.0;
-    }
-    if (value > 1000)
-    {
-        *prefix = "k";
-        return value / 1000.0;
+        if (value > 1024*1024*1024)
+        {
+            *prefix = "Gi";
+            return value / (double)(1024*1024*1024);
+        }
+        if (value > 1024*1024)
+        {
+            *prefix = "Mi";
+            return value / (double)(1024*1024);
+        }
+        if (value > 1024)
+        {
+            *prefix = "Ki";
+            return value / 1024.0;
+        }
     }
     *prefix = " ";
     return (double)value;
@@ -61,6 +86,8 @@ static void print_stats (void)
 {
     uint64_t rx_diff = rx_bytes - rx_bytes_prev;
     uint64_t tx_diff = tx_bytes - tx_bytes_prev;
+    uint64_t rx_pack_diff = rx_packets - rx_packets_prev;
+    uint64_t tx_pack_diff = tx_packets - tx_packets_prev;
 
     struct timespec t_diff;
     t_diff.tv_sec  = t.tv_sec  - t_prev.tv_sec;
@@ -74,18 +101,33 @@ static void print_stats (void)
     uint64_t diff_ms = t_diff.tv_sec * 1000 + t_diff.tv_nsec / 1000000L;
     uint64_t tx_bandwidth = tx_diff * 8 * 1000 / diff_ms;
     uint64_t rx_bandwidth = rx_diff * 8 * 1000 / diff_ms;
+    uint64_t tx_packets_per_sec = tx_pack_diff * 1000 / diff_ms;
+    uint64_t rx_packets_per_sec = rx_pack_diff * 1000 / diff_ms;
 
 
-    char *tx_prefix, *rx_prefix;
-    double tx_bw = convert_to_human_readable (tx_bandwidth, &tx_prefix);
-    double rx_bw = convert_to_human_readable (rx_bandwidth, &rx_prefix);;
+    char *tx_bw_prefix, *rx_bw_prefix;
+    double tx_bw = convert_to_human_readable (0, tx_bandwidth, &tx_bw_prefix);
+    double rx_bw = convert_to_human_readable (0, rx_bandwidth, &rx_bw_prefix);
+    char *tx_bytes_prefix, *rx_bytes_prefix;
+    double tx_bytes_h = convert_to_human_readable (1, tx_bytes, &tx_bytes_prefix);
+    double rx_bytes_h = convert_to_human_readable (1, rx_bytes, &rx_bytes_prefix);
 
+    const char ASCII_ESC = 27;
+    printf( "%c[2J", ASCII_ESC );
+    printf( "%c[H", ASCII_ESC );
 
-
-//    printf("rx_byte=%" PRIu64 ", tx_bytes=%" PRIu64 ", rx_bandwidth=%" PRIu64", tx_bandwidth=%" PRIu64 "\n", rx_bytes, tx_bytes, rx_bandwidth, tx_bandwidth);
-//    printf("rx_byte=%" PRIu64 ", tx_bytes=%" PRIu64 ", rx_bandwidth=%.2f %sBit/s , tx_bandwidth=%.2f %sBit/s\n", rx_bytes, tx_bytes, rx_bw, rx_prefix, tx_bw, tx_prefix);
-    printf("RX: %*.2f %sBit/s , TX: %*.2f %sBit/s\r", 10, rx_bw, rx_prefix, 10, tx_bw, tx_prefix);
-    fflush(stdout);
+    printf("RX: ");
+    printf("%*"PRIu64" packets", 10, rx_packets);
+    printf("%*"PRIu64" packets/s", 10, rx_packets_per_sec);
+    printf("%*.3f %sByte", 10, rx_bytes_h, rx_bytes_prefix);
+    printf("%*.2f %sBit/s", 10, rx_bw, rx_bw_prefix);
+    printf("\n");
+    printf("TX: ");
+    printf("%*"PRIu64" packets", 10, tx_packets);
+    printf("%*"PRIu64" packets/s", 10, tx_packets_per_sec);
+    printf("%*.3f %sByte", 10, tx_bytes_h, tx_bytes_prefix);
+    printf("%*.2f %sBit/s", 10, tx_bw, tx_bw_prefix);
+    printf("\n");
 }
 
 static volatile sig_atomic_t sigIntCached;
@@ -141,13 +183,15 @@ int main(int argc, char** argv)
 
     while (!sigIntCached) 
     {
-        if (net_get_stats (argv[optind], &t, &rx_bytes, &tx_bytes))
+        if (net_get_stats (argv[optind], &t, &rx_bytes, &tx_bytes, &rx_packets, &tx_packets))
             return -3;
 
         print_stats ();
 
         rx_bytes_prev = rx_bytes;
         tx_bytes_prev = tx_bytes;
+        rx_packets_prev = rx_packets;
+        tx_packets_prev = tx_packets;
         t_prev = t;
 
         usleep(updateTime);

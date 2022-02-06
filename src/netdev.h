@@ -22,4 +22,4 @@
 
 extern int net_open (void);
 extern void net_close (void);
-extern int net_get_stats (const char* device, struct timespec *t, uint64_t *rx_bytes, uint64_t *tx_bytes);
+extern int net_get_stats (const char* device, struct timespec *t, uint64_t *rx_bytes, uint64_t *tx_bytes, uint64_t *rx_packets, uint64_t *tx_packets);

@@ -2,7 +2,7 @@
 
 # tool macros
 CC ?= # FILL: the compiler
-CCFLAGS := -Wall -Wextra -I /usr/include/libnl3
+CCFLAGS := -O -Wall -Wextra -I /usr/include/libnl3
 DBGFLAGS := -g
 CCOBJFLAGS := $(CCFLAGS) -c
 LIBS := -lnl-3  -lnl-route-3
