@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 /*
- * TCPPUMP <https://github.com/amartin755/netnag>
- * Copyright (C) 2020 Andreas Martin (netnag@mailbox.org)
+ * NETNAG <https://github.com/amartin755/netnag>
+ * Copyright (C) 2022 Andreas Martin (netnag@mailbox.org)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -181,7 +181,7 @@ int main(int argc, char** argv)
     signal (SIGINT, sigintHandler);
 
 
-    while (!sigIntCached) 
+    while (!sigIntCached)
     {
         if (net_get_stats (argv[optind], &t, &rx_bytes, &tx_bytes, &rx_packets, &tx_packets))
             return -3;
