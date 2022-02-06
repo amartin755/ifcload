@@ -17,10 +17,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <inttypes.h>
 
 #include <unistd.h>
 #include <signal.h>
+#include <getopt.h>
 
 #include "netdev.h"
 
@@ -31,7 +33,7 @@ uint64_t tx_bytes = 0;
 struct timespec t_prev;
 struct timespec t;
 
-static int updateTime = 500000;
+static unsigned updateTime = 500000;
 
 
 static double convert_to_human_readable (uint64_t value, char** prefix)
@@ -95,12 +97,41 @@ static void sigintHandler (int signal)
     }
 }
 
+static void print_usage (const char* arg)
+{
+    fprintf(stderr, "Usage: %s [-t cs] device\n", arg);
+}
 
 int main(int argc, char** argv)
 {
+    int opt;
 
     if (argc < 2)
+    {
+        print_usage (argv[0]);
         return -1;
+    }
+
+    while ((opt = getopt(argc, argv, "t:")) != -1)
+    {
+        if (opt == 't')
+        {
+            int cs = atoi(optarg);
+            if (cs < 1 || cs > 36000)
+            {
+                fprintf (stderr, "Allowed range for opion -t  is 1 - 36000\n");
+                return 1;
+            }
+            updateTime = cs * 100* 1000;
+
+        }
+        else
+        {
+            print_usage (argv[0]);
+            return 1;
+        }
+    }
+
 
     if (net_open ())
         return -2;
@@ -110,7 +141,7 @@ int main(int argc, char** argv)
 
     while (!sigIntCached) 
     {
-        if (net_get_stats (argv[1], &t, &rx_bytes, &tx_bytes))
+        if (net_get_stats (argv[optind], &t, &rx_bytes, &tx_bytes))
             return -3;
 
         print_stats ();
