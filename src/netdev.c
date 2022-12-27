@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 /*
- * NETNAG <https://github.com/amartin755/netnag>
+ * IFCLOAD <https://github.com/amartin755/netnag>
  * Copyright (C) 2022 Andreas Martin (netnag@mailbox.org)
  *
  * This program is free software: you can redistribute it and/or modify

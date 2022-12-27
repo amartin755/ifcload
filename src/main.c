@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 /*
- * NETNAG <https://github.com/amartin755/netnag>
+ * IFCLOAD <https://github.com/amartin755/netnag>
  * Copyright (C) 2022 Andreas Martin (netnag@mailbox.org)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -141,7 +141,8 @@ static void sigintHandler (int signal)
 
 static void print_usage (const char* arg)
 {
-    fprintf(stderr, "Usage: %s [-t cs] device\n", arg);
+    fprintf(stderr, "Usage: %s [options] device\n", arg);
+    fprintf(stderr, "  -t    update time in tenth of seconds (0.1s)\n");
 }
 
 int main(int argc, char** argv)
@@ -161,7 +162,7 @@ int main(int argc, char** argv)
             int cs = atoi(optarg);
             if (cs < 1 || cs > 36000)
             {
-                fprintf (stderr, "Allowed range for opion -t  is 1 - 36000\n");
+                fprintf (stderr, "Allowed range for option -t  is 1 - 36000\n");
                 return 1;
             }
             updateTime = cs * 100* 1000;
